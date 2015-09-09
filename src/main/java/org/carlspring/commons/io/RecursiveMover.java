@@ -142,7 +142,7 @@ public class RecursiveMover
         return CONTINUE;
     }
 
-    void move(Path source, Path target, boolean preserve)
+    public void move(Path source, Path target, boolean preserve)
     {
         CopyOption[] options = (preserve) ?
                                new CopyOption[]{ COPY_ATTRIBUTES, REPLACE_EXISTING } :
