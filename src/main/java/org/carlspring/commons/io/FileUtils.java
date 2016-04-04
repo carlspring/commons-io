@@ -19,6 +19,13 @@ public class FileUtils
             throw new IOException(srcPath.toAbsolutePath().toString() + " is not a directory!");
         }
 
+        /*
+        if (destPath.toFile().exists() && destPath.toFile().isFile())
+        {
+            throw new IOException(destPath.toAbsolutePath().toString() + " is not a directory!");
+        }
+        */
+
         if (!destPath.toFile().exists())
         {
             //noinspection ResultOfMethodCallIgnored

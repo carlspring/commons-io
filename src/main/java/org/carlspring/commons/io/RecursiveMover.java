@@ -1,5 +1,7 @@
 package org.carlspring.commons.io;
 
+import org.carlspring.commons.io.tansformers.PathTransformer;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
@@ -9,7 +11,6 @@ import java.util.EnumSet;
 
 import static java.nio.file.FileVisitResult.CONTINUE;
 import static java.nio.file.FileVisitResult.SKIP_SIBLINGS;
-import static java.nio.file.FileVisitResult.SKIP_SUBTREE;
 import static java.nio.file.StandardCopyOption.COPY_ATTRIBUTES;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
@@ -24,11 +25,20 @@ public class RecursiveMover
 
     private final Path target;
 
+    private PathTransformer pathTransformer;
+
 
     public RecursiveMover(Path source, Path target)
     {
         this.source = source;
         this.target = target;
+    }
+
+    public RecursiveMover(Path source, Path target, PathTransformer pathTransformer)
+    {
+        this.source = source;
+        this.target = pathTransformer.getTransformedPath(source, target);
+        this.pathTransformer = pathTransformer;
     }
 
     public FileVisitResult preVisitDirectory(Path sourcePath, BasicFileAttributes attrs)
@@ -111,6 +121,13 @@ public class RecursiveMover
         {
             move(sourcePath.getParent(), targetPath.getParent(), false);
 
+            if (pathTransformer != null)
+            {
+                // Locate and transform the matching files here:
+                // TODO: Finish up with this
+                //! pathTransformer.transform();
+            }
+
             return SKIP_SIBLINGS;
         }
         else
@@ -150,7 +167,14 @@ public class RecursiveMover
 
         try
         {
-            Files.move(source, target, options);
+            if (pathTransformer != null)
+            {
+                Files.move(source, pathTransformer.getTransformedPath(source, target), options);
+            }
+            else
+            {
+                Files.move(source, target, options);
+            }
         }
         catch (FileAlreadyExistsException e)
         {

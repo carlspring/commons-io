@@ -1,6 +1,8 @@
 package org.carlspring.commons.io;
 
 import org.apache.commons.io.IOUtils;
+import org.carlspring.commons.io.transformers.ArtifactMoverPathTransformer;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -37,23 +39,36 @@ public class FileUtilsTest
     public void setUp()
             throws Exception
     {
-        //noinspection ResultOfMethodCallIgnored
-        srcDir.toFile().mkdirs();
+        if (!INITIALIZED)
+        {
+            // This stupid check is here just for the sake of running these test cases
+            // via an IDE which doesn't properly perform a cleanup before running them
+            File testResourcesDirectory = new File("target/test-resources");
+            if (testResourcesDirectory.exists())
+            {
+                org.apache.commons.io.FileUtils.deleteDirectory(testResourcesDirectory);
+            }
 
-        mkdirs(srcDir.toFile(), "blah/blahblah", "yadee/boo/hoo");
+            //noinspection ResultOfMethodCallIgnored
+            srcDir.toFile().mkdirs();
 
-        // generateTestResource(new File(srcDir.toFile().getAbsolutePath(), "foo/bar.bin"), 128000000L);
-        generateTestResource(new File(srcDir.toFile(), "bar.bin"), SMALL_FILE_SIZE);
-        generateTestResource(new File(srcDir.toFile(), "blah/blah1.bin"), SMALL_FILE_SIZE);
-        generateTestResource(new File(srcDir.toFile(), "blah/blah2.bin"), SMALL_FILE_SIZE);
-        generateTestResource(new File(srcDir.toFile(), "blah/blahblah/moreblah1.bin"), SMALL_FILE_SIZE);
-        generateTestResource(new File(srcDir.toFile(), "blah/blahblah/moreblah2.bin"), SMALL_FILE_SIZE);
-        generateTestResource(new File(srcDir.toFile(), "yadee/yadda1.bin"), SMALL_FILE_SIZE);
-        generateTestResource(new File(srcDir.toFile(), "yadee/yadda2.bin"), SMALL_FILE_SIZE);
-        generateTestResource(new File(srcDir.toFile(), "yadee/yadda3.bin"), SMALL_FILE_SIZE);
-        generateTestResource(new File(srcDir.toFile(), "yadee/boo/hoo1.bin"), SMALL_FILE_SIZE);
-        generateTestResource(new File(srcDir.toFile(), "yadee/boo/hoo2.bin"), SMALL_FILE_SIZE);
-        generateTestResource(new File(srcDir.toFile(), "yadee/boo/hoo/wow1.bin"), SMALL_FILE_SIZE);
+            mkdirs(srcDir.toFile(), "blah/blahblah", "yadee/boo/hoo");
+
+            // generateTestResource(new File(srcDir.toFile().getAbsolutePath(), "foo/bar.bin"), 128000000L);
+            generateTestResource(new File(srcDir.toFile(), "bar.bin"), SMALL_FILE_SIZE);
+            generateTestResource(new File(srcDir.toFile(), "blah/blah1.bin"), SMALL_FILE_SIZE);
+            generateTestResource(new File(srcDir.toFile(), "blah/blah2.bin"), SMALL_FILE_SIZE);
+            generateTestResource(new File(srcDir.toFile(), "blah/blahblah/moreblah1.bin"), SMALL_FILE_SIZE);
+            generateTestResource(new File(srcDir.toFile(), "blah/blahblah/moreblah2.bin"), SMALL_FILE_SIZE);
+            generateTestResource(new File(srcDir.toFile(), "yadee/yadda1.bin"), SMALL_FILE_SIZE);
+            generateTestResource(new File(srcDir.toFile(), "yadee/yadda2.bin"), SMALL_FILE_SIZE);
+            generateTestResource(new File(srcDir.toFile(), "yadee/yadda3.bin"), SMALL_FILE_SIZE);
+            generateTestResource(new File(srcDir.toFile(), "yadee/boo/hoo1.bin"), SMALL_FILE_SIZE);
+            generateTestResource(new File(srcDir.toFile(), "yadee/boo/hoo2.bin"), SMALL_FILE_SIZE);
+            generateTestResource(new File(srcDir.toFile(), "yadee/boo/hoo/wow1.bin"), SMALL_FILE_SIZE);
+
+            INITIALIZED = true;
+        }
     }
 
     private void mkdirs(File basedir, String... dirs)
@@ -142,6 +157,62 @@ public class FileUtilsTest
 
         System.out.println("Successfully performed recursive directory move in " + duration + " ms," +
                            " (where the destination directory contains some files in advance).");
+    }
+
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    @Test
+    public void testMoveDirectoryUsingPathTransformer()
+            throws IOException
+    {
+        Path sourcePath = Paths.get("target/test-resources/org/foo/bar/1.2.3/bar-1.2.3.jar");
+        Path targetPath = Paths.get("target/test-resources/org/foo/blah/1.2.3/blah-1.2.3.jar");
+
+        Path sourceMetadataPathAtVersionLevel = Paths.get("target/test-resources/org/foo/bar/1.2.3/maven-metadata.xml");
+        Path targetMetadataPathAtVersionLevel = Paths.get("target/test-resources/org/foo/blah/1.2.3/maven-metadata.xml");
+
+        Path sourceMetadataPathAtArtifactLevel = Paths.get("target/test-resources/org/foo/bar/maven-metadata.xml");
+        Path targetMetadataPathAtArtifactLevel = Paths.get("target/test-resources/org/foo/blah/maven-metadata.xml");
+
+        ArtifactMoverPathTransformer transformer = new ArtifactMoverPathTransformer();
+
+        File sourceDir = new File("target/test-resources/org/foo/bar/1.2.3");
+        sourceDir.mkdirs();
+
+        File targetDir = new File("target/test-resources/org/foo/blah");
+        targetDir.mkdirs();
+
+        Files.createFile(sourcePath);
+        Files.createFile(sourceMetadataPathAtVersionLevel);
+        Files.createFile(sourceMetadataPathAtArtifactLevel);
+
+        Path source = Paths.get("target/test-resources/org/foo/bar/1.2.3").toAbsolutePath();
+        Path target = Paths.get("target/test-resources/org/foo/blah").toAbsolutePath();
+
+        // Execute the actual test:
+        EnumSet<FileVisitOption> options = EnumSet.of(FileVisitOption.FOLLOW_LINKS);
+
+        RecursiveMover mover = new RecursiveMover(source, target, transformer);
+        Files.walkFileTree(source, options, Integer.MAX_VALUE, mover);
+
+        assertTrue("Failed to move file!", target.toFile().exists());
+        assertTrue("Failed to move file!", !source.toFile().exists());
+
+        assertEquals("Failed to transform artifact path!",
+                     "target/test-resources/org/foo/blah/1.2.3/blah-1.2.3.jar",
+                     transformer.getTransformedPath(sourcePath, targetPath).toFile().getPath());
+
+        assertEquals("Failed to transform artifact path!",
+                     "target/test-resources/org/foo/blah/maven-metadata.xml",
+                     transformer.getTransformedPath(sourceMetadataPathAtArtifactLevel,
+                                                    targetMetadataPathAtArtifactLevel).toFile().getPath());
+
+        assertEquals("Failed to transform artifact path!",
+                     "target/test-resources/org/foo/blah/1.2.3/maven-metadata.xml",
+                     transformer.getTransformedPath(sourceMetadataPathAtVersionLevel,
+                                                    targetMetadataPathAtVersionLevel).toFile().getPath());
+
+        assertTrue("Failed to move file!",
+                   new File("target/test-resources/org/foo/blah/1.2.3/blah-1.2.3.jar").exists());
     }
 
 }
