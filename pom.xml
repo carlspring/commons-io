@@ -10,7 +10,7 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>Commons IO</name>
+    <name>Commons: IO</name>
 
     <licenses>
         <license>
@@ -30,6 +30,10 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <version.jcl>1.7.7</version.jcl>
+        <version.slf4j>1.7.7</version.slf4j>
+        <version.logback>1.1.2</version.logback>
     </properties>
 
     <build>
@@ -60,6 +64,24 @@
             <version>2.4</version>
             <scope>test</scope>
         </dependency>
+
+        <!-- Logging -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jcl-over-slf4j</artifactId>
+            <version>${version.jcl}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jul-to-slf4j</artifactId>
+            <version>${version.jcl}</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${version.logback}</version>
+        </dependency>
+        <!-- Logging -->
 
         <dependency>
             <groupId>junit</groupId>
