@@ -7,3 +7,4 @@ Currently, it contains:
   This differs from Apache Commons IO, Guava and Spring's implementations in that it doesn't need to first copy and then delete,
   but instead carries out a real move operation. This also performs a merge operation.
 - A RandomInputStream which can be quite useful when you have to generate a number of random bytes.
+- [MultipleDigestInputStream](https://github.com/carlspring/commons-io/blob/master/src/main/java/org/carlspring/commons/io/MultipleDigestInputStream.java)/[MultipleDigestOutputStream](https://github.com/carlspring/commons-io/blob/master/src/main/java/org/carlspring/commons/io/MultipleDigestOutputStream.java) which allow you to calculate digests when you're done reading/writing streams, hence avoiding having to re-read the stream.
