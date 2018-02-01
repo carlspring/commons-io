@@ -1,5 +1,7 @@
 # commons-io
 
+[![Known Vulnerabilities](https://snyk.io/test/github/carlspring/commons-io/badge.svg)](https://snyk.io/test/github/carlspring/commons-io/)
+
 This is a simple library for common IO operations.
 
 Currently, it contains:
