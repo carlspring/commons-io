@@ -1,5 +1,7 @@
 # commons-io
 
+[![Master Build Status](https://dev.carlspring.org/jenkins/buildStatus/icon?job=opensource/commons-io/master)](https://dev.carlspring.org/jenkins/blue/organizations/jenkins/opensource%2Fcommons-io/activity?branch=master)
+
 [![Known Vulnerabilities](https://snyk.io/test/github/carlspring/commons-io/badge.svg)](https://snyk.io/test/github/carlspring/commons-io/)
 
 This is a simple library for common IO operations.
