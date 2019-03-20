@@ -11,6 +11,9 @@
     <packaging>jar</packaging>
 
     <name>Commons: IO</name>
+    <description>A set of common IO classes</description>
+
+    <url>https://github.com/carlspring/commons-io/</url>
 
     <licenses>
         <license>
