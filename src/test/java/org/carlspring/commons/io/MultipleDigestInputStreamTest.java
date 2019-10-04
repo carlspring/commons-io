@@ -79,8 +79,8 @@ public class MultipleDigestInputStreamTest
         fos.flush();
         fos.close();
 
-        ByteRange byteRange1 = new ByteRange(0, 10);
-        ByteRange byteRange2 = new ByteRange(11, 21);
+        ByteRange byteRange1 = new ByteRange(0L, 10L);
+        ByteRange byteRange2 = new ByteRange(11L, 21L);
 
         List<ByteRange> byteRanges = new ArrayList<>();
         byteRanges.add(byteRange1);
