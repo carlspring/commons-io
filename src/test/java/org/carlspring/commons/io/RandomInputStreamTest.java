@@ -1,24 +1,22 @@
 package org.carlspring.commons.io;
 
-import org.junit.Test;
-
 import java.io.IOException;
 
-import static org.junit.Assert.assertEquals;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author mtodorov
  */
-public class RandomInputStreamTest
+class RandomInputStreamTest
 {
 
-    
     @Test
-    public void testIO()
+    void testIO()
             throws IOException
     {
         RandomInputStream ris = new RandomInputStream(10000);
-        
+
         int total = 0;
         int len;
         int size = 4096;
@@ -28,8 +26,8 @@ public class RandomInputStreamTest
         {
             total += len;
         }
-        
-        assertEquals("The number of read bytes do not match the defined size!", 10000, total);
+
+        assertEquals(10000, total, "The number of read bytes do not match the defined size!");
     }
 
 }

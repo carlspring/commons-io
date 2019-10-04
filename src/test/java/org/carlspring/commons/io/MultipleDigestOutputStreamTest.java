@@ -2,87 +2,89 @@ package org.carlspring.commons.io;
 
 import org.carlspring.commons.encryption.EncryptionAlgorithmsEnum;
 import org.carlspring.commons.util.MessageDigestUtils;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
 
-import static org.junit.Assert.assertEquals;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author mtodorov
  */
-public class MultipleDigestOutputStreamTest
+class MultipleDigestOutputStreamTest
 {
+
     private static final Logger logger = LoggerFactory.getLogger(MultipleDigestOutputStreamTest.class);
 
-    @Before
-    public void setUp()
+    @BeforeEach
+    void setUp()
             throws Exception
     {
-        File dir = new File("target/test-resources");
-        if (!dir.exists())
+        Path dir = Paths.get("target/test-resources").toAbsolutePath();
+        if (Files.notExists(dir))
         {
-            //noinspection ResultOfMethodCallIgnored
-            dir.mkdirs();
+            Files.createDirectories(dir);
         }
     }
 
     @Test
-    public void testWrite()
+    void testWrite()
             throws IOException,
                    NoSuchAlgorithmException
     {
         String s = "This is a test.";
 
-        File file = new File("target/test-resources/metadata.xml");
+        Path filePath = Paths.get("target/test-resources/metadata.xml").toAbsolutePath();
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        MultipleDigestOutputStream mdos = new MultipleDigestOutputStream(file, baos);
-        
+        MultipleDigestOutputStream mdos = new MultipleDigestOutputStream(filePath, baos);
+
         mdos.write(s.getBytes());
         mdos.flush();
 
         final String md5 = mdos.getMessageDigestAsHexadecimalString(EncryptionAlgorithmsEnum.MD5.getAlgorithm());
         final String sha1 = mdos.getMessageDigestAsHexadecimalString(EncryptionAlgorithmsEnum.SHA1.getAlgorithm());
 
-        assertEquals("Incorrect MD5 sum!", "120ea8a25e5d487bf68b5f7096440019", md5);
-        assertEquals("Incorrect SHA-1 sum!", "afa6c8b3a2fae95785dc7d9685a57835d703ac88", sha1);
+        assertEquals("120ea8a25e5d487bf68b5f7096440019", md5, "Incorrect MD5 sum!");
+        assertEquals("afa6c8b3a2fae95785dc7d9685a57835d703ac88", sha1, "Incorrect SHA-1 sum!");
 
         mdos.close();
 
         logger.debug("MD5:  " + md5);
         logger.debug("SHA1: " + sha1);
 
-        File md5File = new File(file.getAbsolutePath() + EncryptionAlgorithmsEnum.MD5.getExtension());
-        File sha1File = new File(file.getAbsolutePath() + EncryptionAlgorithmsEnum.SHA1.getExtension());
+        Path md5File = filePath.resolveSibling(filePath.getFileName() + EncryptionAlgorithmsEnum.MD5.getExtension());
+        Path sha1File = filePath.resolveSibling(filePath.getFileName() + EncryptionAlgorithmsEnum.SHA1.getExtension());
 
-        Assert.assertTrue("Failed to create md5 checksum file!", md5File.exists());
-        Assert.assertTrue("Failed to create sha1 checksum file!", sha1File.exists());
+        assertTrue(Files.exists(md5File), "Failed to create md5 checksum filePath!");
+        assertTrue(Files.exists(sha1File), "Failed to create sha1 checksum filePath!");
 
-        String md5ReadIn = MessageDigestUtils.readChecksumFile(md5File.getAbsolutePath());
-        String sha1ReadIn = MessageDigestUtils.readChecksumFile(sha1File.getAbsolutePath());
+        String md5ReadIn = MessageDigestUtils.readChecksumFile(md5File.toString());
+        String sha1ReadIn = MessageDigestUtils.readChecksumFile(sha1File.toString());
 
-        assertEquals("MD5 checksum file contains incorrect checksum!", md5, md5ReadIn);
-        assertEquals("SHA-1 checksum file contains incorrect checksum!", sha1, sha1ReadIn);
+        assertEquals(md5, md5ReadIn, "MD5 checksum filePath contains incorrect checksum!");
+        assertEquals(sha1, sha1ReadIn, "SHA-1 checksum filePath contains incorrect checksum!");
     }
 
     @Test
-    public void testConcatenatedWrites()
+    void testConcatenatedWrites()
             throws IOException,
                    NoSuchAlgorithmException
     {
-        String s = "This is a big fat super long text which has no meaning, but is good for the test.";
+        String string = "This is a big fat super long text which has no meaning, but is good for the test.";
 
-        ByteArrayInputStream bais1 = new ByteArrayInputStream(s.getBytes());
-        ByteArrayInputStream bais2 = new ByteArrayInputStream(s.getBytes());
+        ByteArrayInputStream bais1 = new ByteArrayInputStream(string.getBytes());
+        ByteArrayInputStream bais2 = new ByteArrayInputStream(string.getBytes());
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         MultipleDigestOutputStream mdos = new MultipleDigestOutputStream(baos);
@@ -113,7 +115,7 @@ public class MultipleDigestOutputStreamTest
 
         bais2.skip(total);
 
-        logger.debug("Skipped {}/{} bytes.", total, s.getBytes().length);
+        logger.debug("Skipped {}/{} bytes.", total, string.getBytes().length);
 
         while ((len = bais2.read(bytes, 0, size)) != -1)
         {
@@ -124,10 +126,10 @@ public class MultipleDigestOutputStreamTest
 
         mdos.flush();
 
-        logger.debug("Original:      {}", s);
+        logger.debug("Original:      {}", string);
         logger.debug("Read:          {}", new String(baos.toByteArray()));
 
-        logger.debug("Read {}/{} bytes.", total, s.getBytes().length);
+        logger.debug("Read {}/{} bytes.", total, string.getBytes().length);
 
         mdos.close();
 
@@ -137,8 +139,8 @@ public class MultipleDigestOutputStreamTest
         logger.debug("MD5:  {}", md5);
         logger.debug("SHA1: {}", sha1);
 
-        assertEquals("Incorrect MD5 sum!", "693188a2fb009bf2a87afcbca95cfcd6", md5);
-        assertEquals("Incorrect SHA-1 sum!", "6ed7c74babd1609cb11836279672ade14a8748c1", sha1);
+        assertEquals("693188a2fb009bf2a87afcbca95cfcd6", md5, "Incorrect MD5 sum!");
+        assertEquals("6ed7c74babd1609cb11836279672ade14a8748c1", sha1, "Incorrect SHA-1 sum!");
     }
 
 }

@@ -9,25 +9,27 @@ import java.nio.file.Paths;
 import java.util.EnumSet;
 
 import org.apache.commons.io.IOUtils;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author mtodorov
  */
-public class FileUtilsTest
+class FileUtilsTest
 {
 
-    public static final long SMALL_FILE_SIZE = 8L;
-    public static final Path srcDir = Paths.get("target/test-resources/src/foo").toAbsolutePath();
+    private static final long SMALL_FILE_SIZE = 8L;
+
+    private static final Path srcDir = Paths.get("target/test-resources/src/foo").toAbsolutePath();
+
     private static final Logger logger = LoggerFactory.getLogger(FileUtilsTest.class);
 
-    @Before
-    public void setUp()
+    @BeforeEach
+    void setUp()
             throws Exception
     {
         Files.createDirectories(srcDir);
@@ -47,8 +49,8 @@ public class FileUtilsTest
         generateTestResource(srcDir.resolve("yadee/boo/hoo/wow1.bin"), SMALL_FILE_SIZE);
     }
 
-    private void mkdirs(Path basePath,
-                        String... dirs)
+    private static void mkdirs(Path basePath,
+                               String... dirs)
             throws IOException
     {
         for (String dir : dirs)
@@ -58,8 +60,8 @@ public class FileUtilsTest
         }
     }
 
-    private void generateTestResource(Path filePath,
-                                      long length)
+    private static void generateTestResource(Path filePath,
+                                             long length)
             throws IOException
     {
         RandomInputStream ris = new RandomInputStream(length);
@@ -72,7 +74,7 @@ public class FileUtilsTest
     }
 
     @Test
-    public void testMoveDirectory()
+    void testMoveDirectory()
             throws IOException
     {
         Path destDir = Paths.get("target/test-resources/move-directory-dest-non-existent/dest").toAbsolutePath();
@@ -91,15 +93,15 @@ public class FileUtilsTest
         Path srcFile = srcDir.resolve("bar.bin");
         Path destFile = destDir.resolve("bar.bin");
 
-        assertTrue("Failed to move file!", Files.exists(destFile));
-        assertTrue("Failed to move file!", Files.notExists(srcFile));
+        assertTrue(Files.exists(destFile), "Failed to move file!");
+        assertTrue(Files.notExists(srcFile), "Failed to move file!");
 
         logger.debug("Successfully performed recursive directory move in {} ms, " +
                      "(where the destination directory does not contain any files in advance).", duration);
     }
 
     @Test
-    public void testMoveDirectoryWhereDestinationExists()
+    void testMoveDirectoryWhereDestinationExists()
             throws IOException
     {
         Path destDir = Paths.get("target/test-resources/move-directory-dest-contains-foo/foo").toAbsolutePath();
@@ -126,10 +128,10 @@ public class FileUtilsTest
         Path srcFile = srcDir.resolve("bar.bin");
         Path destFile = destDir.resolve("bar.bin");
 
-        assertTrue("Failed to move file!", Files.exists(destFile));
-        assertTrue("Failed to move file!", Files.notExists(srcFile));
+        assertTrue(Files.exists(destFile), "Failed to move file!");
+        assertTrue(Files.notExists(srcFile), "Failed to move file!");
 
-        assertEquals("Failed to replace file!", SMALL_FILE_SIZE, Files.size(barBin));
+        assertEquals(SMALL_FILE_SIZE, Files.size(barBin), "Failed to replace file!");
 
         logger.debug("Successfully performed recursive directory move in {} ms," +
                      " (where the destination directory contains some files in advance).", duration);

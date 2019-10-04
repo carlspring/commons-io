@@ -21,21 +21,24 @@ public abstract class AbstractByteRangeInputStream
                    Repositioning,
                    ResourceWithLength
 {
+    private boolean rangedMode = false;
 
-    /**
-     * The number of bytes to read from the start of the stream, before stopping to read.
-     */
-    long limit = 0L;
     /**
      * The number of bytes read from the stream, or from this byte range.
      */
-    long bytesRead = 0L;
-    List<ByteRange> byteRanges = new ArrayList<>();
-    ByteRange currentByteRange;
-    int currentByteRangeIndex = 0;
-    ReloadableInputStreamHandler reloadableInputStreamHandler;
-    private boolean rangedMode = false;
+    protected long bytesRead = 0L;
+    /**
+     * The number of bytes to read from the start of the stream, before stopping to read.
+     */
+    protected long limit = 0L;
 
+    protected List<ByteRange> byteRanges = new ArrayList<>();
+
+    protected ByteRange currentByteRange;
+
+    protected int currentByteRangeIndex = 0;
+
+    protected ReloadableInputStreamHandler reloadableInputStreamHandler;
 
     public AbstractByteRangeInputStream(ReloadableInputStreamHandler handler,
                                         ByteRange byteRange)

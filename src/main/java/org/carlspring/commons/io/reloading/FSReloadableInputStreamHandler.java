@@ -1,10 +1,14 @@
 package org.carlspring.commons.io.reloading;
 
 import org.carlspring.commons.io.resource.ResourceCloser;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.*;
 
 /**
  * @author mtodorov
@@ -15,14 +19,14 @@ public class FSReloadableInputStreamHandler
 
     private static final Logger logger = LoggerFactory.getLogger(FSReloadableInputStreamHandler.class);
 
-    private File file;
+    private Path filePath;
 
     private InputStream inputStream;
 
 
-    public FSReloadableInputStreamHandler(File file)
+    public FSReloadableInputStreamHandler(Path filePath)
     {
-        this.file = file;
+        this.filePath = filePath;
     }
 
     @Override
@@ -49,9 +53,9 @@ public class FSReloadableInputStreamHandler
     }
 
     private void loadInputStream()
-            throws FileNotFoundException
+            throws IOException
     {
-        inputStream = new FileInputStream(file);
+        inputStream = Files.newInputStream(filePath);
     }
 
 }

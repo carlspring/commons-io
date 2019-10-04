@@ -7,39 +7,42 @@ import org.carlspring.commons.io.reloading.ReloadableInputStreamHandler;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author mtodorov
  */
-public class MultipleDigestInputStreamTest
+class MultipleDigestInputStreamTest
 {
+
     private static final Logger logger = LoggerFactory.getLogger(MultipleDigestInputStreamTest.class);
 
-    @Before
-    public void setUp() throws Exception
+    @BeforeEach
+    void setUp()
+            throws Exception
     {
-        File testResourcesDir = new File("target/test-resources");
-        if (!testResourcesDir.exists())
+        Path testResourcesDir = Paths.get("target/test-resources").toAbsolutePath();
+        if (Files.notExists(testResourcesDir))
         {
-            //noinspection ResultOfMethodCallIgnored
-            testResourcesDir.mkdirs();
+            Files.createDirectories(testResourcesDir);
         }
     }
 
     @Test
-    public void testRead()
+    void testRead()
             throws IOException,
                    NoSuchAlgorithmException
     {
@@ -66,32 +69,31 @@ public class MultipleDigestInputStreamTest
         final String md5 = mdis.getMessageDigestAsHexadecimalString(EncryptionAlgorithmsEnum.MD5.getAlgorithm());
         final String sha1 = mdis.getMessageDigestAsHexadecimalString(EncryptionAlgorithmsEnum.SHA1.getAlgorithm());
 
-        assertEquals("Incorrect MD5 sum!", "693188a2fb009bf2a87afcbca95cfcd6", md5);
-        assertEquals("Incorrect SHA-1 sum!", "6ed7c74babd1609cb11836279672ade14a8748c1", sha1);
+        assertEquals("693188a2fb009bf2a87afcbca95cfcd6", md5, "Incorrect MD5 sum!");
+        assertEquals("6ed7c74babd1609cb11836279672ade14a8748c1", sha1, "Incorrect SHA-1 sum!");
 
         logger.debug("MD5:  {}", md5);
         logger.debug("SHA1: {}", sha1);
     }
 
     @Test
-    public void testReloading()
-            throws IOException, NoSuchAlgorithmException
+    void testReloading()
+            throws IOException
     {
-        File f = new File("target/test-resources/test-stream-reloading.txt");
+        Path path = Paths.get("target/test-resources/test-stream-reloading.txt").toAbsolutePath();
 
-        FileOutputStream fos = new FileOutputStream(f);
-        fos.write("This is a test.\n".getBytes());
-        fos.flush();
-        fos.close();
+        try (OutputStream fos = Files.newOutputStream(path))
+        {
+            fos.write("This is a test.\n".getBytes());
+            fos.flush();
+        }
 
         ByteRange byteRange1 = new ByteRange(0L, 10L);
         ByteRange byteRange2 = new ByteRange(11L, 21L);
 
-        List<ByteRange> byteRanges = new ArrayList<>();
-        byteRanges.add(byteRange1);
-        byteRanges.add(byteRange2);
+        List<ByteRange> byteRanges = Arrays.asList(byteRange1, byteRange2);
 
-        ReloadableInputStreamHandler handler = new FSReloadableInputStreamHandler(f);
+        ReloadableInputStreamHandler handler = new FSReloadableInputStreamHandler(path);
         MultipleDigestInputStream mdis = new MultipleDigestInputStream(handler, byteRanges);
         mdis.setLimit(1);
 
@@ -101,7 +103,7 @@ public class MultipleDigestInputStreamTest
             len++;
         }
 
-        assertEquals("Failed to limit byte range!", 1L, len);
+        assertEquals(1L, len, "Failed to limit byte range!");
 
         mdis.reload();
         mdis.setLimit(3);
@@ -113,7 +115,7 @@ public class MultipleDigestInputStreamTest
             len++;
         }
 
-        assertEquals("Failed to limit byte range!", 2L, len);
+        assertEquals(2L, len, "Failed to limit byte range!");
     }
 
 }
