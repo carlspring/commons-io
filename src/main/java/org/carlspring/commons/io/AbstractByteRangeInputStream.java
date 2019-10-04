@@ -8,8 +8,8 @@ import org.carlspring.commons.io.reloading.Repositioning;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -22,43 +22,36 @@ public abstract class AbstractByteRangeInputStream
                    ResourceWithLength
 {
 
-    private boolean rangedMode = false;
-
     /**
      * The number of bytes to read from the start of the stream, before stopping to read.
      */
-    protected long limit = 0L;
-
+    long limit = 0L;
     /**
      * The number of bytes read from the stream, or from this byte range.
      */
-    protected long bytesRead = 0L;
-
-    protected List<ByteRange> byteRanges = new ArrayList<>();
-
-    protected ByteRange currentByteRange;
-
-    protected int currentByteRangeIndex = 0;
-
-    protected ReloadableInputStreamHandler reloadableInputStreamHandler;
+    long bytesRead = 0L;
+    List<ByteRange> byteRanges = new ArrayList<>();
+    ByteRange currentByteRange;
+    int currentByteRangeIndex = 0;
+    ReloadableInputStreamHandler reloadableInputStreamHandler;
+    private boolean rangedMode = false;
 
 
-    public AbstractByteRangeInputStream(ReloadableInputStreamHandler handler, ByteRange byteRange)
-            throws IOException, NoSuchAlgorithmException
+    public AbstractByteRangeInputStream(ReloadableInputStreamHandler handler,
+                                        ByteRange byteRange)
+            throws IOException
     {
         super(handler.getInputStream());
 
-        List<ByteRange> byteRanges = new ArrayList<>();
-        byteRanges.add(byteRange);
-
         this.reloadableInputStreamHandler = handler;
-        this.byteRanges = byteRanges;
-        this.currentByteRange = byteRanges.get(0);
+        this.byteRanges = Collections.singletonList(byteRange);
+        this.currentByteRange = byteRange;
         this.rangedMode = true;
     }
 
-    public AbstractByteRangeInputStream(ReloadableInputStreamHandler handler, List<ByteRange> byteRanges)
-            throws IOException, NoSuchAlgorithmException
+    public AbstractByteRangeInputStream(ReloadableInputStreamHandler handler,
+                                        List<ByteRange> byteRanges)
+            throws IOException
     {
         super(handler.getInputStream());
         this.reloadableInputStreamHandler = handler;
@@ -68,7 +61,6 @@ public abstract class AbstractByteRangeInputStream
     }
 
     public AbstractByteRangeInputStream(InputStream is)
-            throws NoSuchAlgorithmException
     {
         super(is);
     }
@@ -87,26 +79,23 @@ public abstract class AbstractByteRangeInputStream
     {
         if (byteRanges != null && !byteRanges.isEmpty() && currentByteRangeIndex < byteRanges.size())
         {
-            if (currentByteRangeIndex < byteRanges.size())
+            ByteRange current = currentByteRange;
+
+            currentByteRangeIndex++;
+            currentByteRange = byteRanges.get(currentByteRangeIndex);
+
+            if (currentByteRange.getOffset() > current.getLimit())
             {
-                ByteRange current = currentByteRange;
+                // If the offset is higher than the current position, skip forward
+                long bytesToSkip = currentByteRange.getOffset() - current.getLimit();
 
-                currentByteRangeIndex++;
-                currentByteRange = byteRanges.get(currentByteRangeIndex);
-
-                if (currentByteRange.getOffset() > current.getLimit())
-                {
-                    // If the offset is higher than the current position, skip forward
-                    long bytesToSkip = currentByteRange.getOffset() - current.getLimit();
-
-                    //noinspection ResultOfMethodCallIgnored
-                    in.skip(bytesToSkip);
-                }
-                else
-                {
-                    reloadableInputStreamHandler.reload();
-                    in = reloadableInputStreamHandler.getInputStream();
-                }
+                //noinspection ResultOfMethodCallIgnored
+                in.skip(bytesToSkip);
+            }
+            else
+            {
+                reloadableInputStreamHandler.reload();
+                in = reloadableInputStreamHandler.getInputStream();
             }
         }
     }

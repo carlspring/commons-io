@@ -4,14 +4,20 @@ import org.carlspring.commons.encryption.EncryptionAlgorithmsEnum;
 import org.carlspring.commons.http.range.ByteRange;
 import org.carlspring.commons.io.reloading.FSReloadableInputStreamHandler;
 import org.carlspring.commons.io.reloading.ReloadableInputStreamHandler;
-import org.junit.Before;
-import org.junit.Test;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.Before;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -19,7 +25,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class MultipleDigestInputStreamTest
 {
-
+    private static final Logger logger = LoggerFactory.getLogger(MultipleDigestInputStreamTest.class);
 
     @Before
     public void setUp() throws Exception
@@ -48,7 +54,6 @@ public class MultipleDigestInputStreamTest
         byte[] bytes = new byte[size];
         int len;
 
-        //noinspection StatementWithEmptyBody
         while ((len = mdis.read(bytes, 0, size)) != -1)
         {
             baos.write(bytes, 0, len);
@@ -56,7 +61,7 @@ public class MultipleDigestInputStreamTest
 
         baos.flush();
 
-        System.out.println(new String(baos.toByteArray()));
+        logger.debug(new String(baos.toByteArray()));
 
         final String md5 = mdis.getMessageDigestAsHexadecimalString(EncryptionAlgorithmsEnum.MD5.getAlgorithm());
         final String sha1 = mdis.getMessageDigestAsHexadecimalString(EncryptionAlgorithmsEnum.SHA1.getAlgorithm());
@@ -64,8 +69,8 @@ public class MultipleDigestInputStreamTest
         assertEquals("Incorrect MD5 sum!", "693188a2fb009bf2a87afcbca95cfcd6", md5);
         assertEquals("Incorrect SHA-1 sum!", "6ed7c74babd1609cb11836279672ade14a8748c1", sha1);
 
-        System.out.println("MD5:  " + md5);
-        System.out.println("SHA1: " + sha1);
+        logger.debug("MD5:  {}", md5);
+        logger.debug("SHA1: {}", sha1);
     }
 
     @Test

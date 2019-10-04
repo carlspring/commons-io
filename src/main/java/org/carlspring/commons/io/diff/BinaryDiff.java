@@ -1,12 +1,12 @@
 package org.carlspring.commons.io.diff;
 
-import org.carlspring.commons.io.resource.ResourceCloser;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This is a very simple tool that can give you an idea of where two streams
@@ -22,36 +22,40 @@ public class BinaryDiff
 
     private static final Logger logger = LoggerFactory.getLogger(BinaryDiff.class);
 
-    private InputStream inputStream1;
+    private byte[] bytes1;
 
-    private InputStream inputStream2;
+    private byte[] bytes2;
 
     private long numberOfBytesToShowUponDifference = 100;
 
 
-    public BinaryDiff(InputStream inputStream1, InputStream inputStream2)
+    public BinaryDiff(byte[] bytes1,
+                      byte[] bytes2)
     {
-        this.inputStream1 = inputStream1;
-        this.inputStream2 = inputStream2;
+        this.bytes1 = bytes1;
+        this.bytes2 = bytes2;
     }
 
     /**
      * Checks for differences between the InputStream-s.
      *
-     * @return      True, if there are differences; false otherwise.
+     * @return True, if there are differences; false otherwise.
      */
     public boolean diff()
     {
-        try
+        try (ByteArrayOutputStream baos1 = new ByteArrayOutputStream();
+             ByteArrayOutputStream baos2 = new ByteArrayOutputStream();
+             InputStream inputStream1 = new ByteArrayInputStream(bytes1);
+             InputStream inputStream2 = new ByteArrayInputStream(bytes2))
         {
-            byte b1[] = new byte[1];
-            byte b2[] = new byte[1];
-            int bytesReadFromIS1 = 0;
-            int bytesReadFromIS2 = 0;
+            byte[] b1 = new byte[1];
+            byte[] b2 = new byte[1];
+            int bytesReadFromIS1;
+            int bytesReadFromIS2;
             long totalReadFromIS1 = 0L;
             long totalReadFromIS2 = 0L;
 
-            long differencePositionStart = 0L;
+            long differencePositionStart;
 
             // Read byte by byte:
             while ((bytesReadFromIS1 = inputStream1.read(b1)) != -1 &&
@@ -64,10 +68,7 @@ public class BinaryDiff
                 {
                     differencePositionStart = totalReadFromIS1;
 
-                    logger.info("Byte at position " + differencePositionStart + " differs: ");
-
-                    ByteArrayOutputStream baos1 = new ByteArrayOutputStream();
-                    ByteArrayOutputStream baos2 = new ByteArrayOutputStream();
+                    logger.info("Byte at position {} differs: ", differencePositionStart);
 
                     baos1.write(b1);
                     baos1.flush();
@@ -80,11 +81,11 @@ public class BinaryDiff
 
                     streamsHaveDifferentLength(totalReadFromIS1, totalReadFromIS2);
 
-                    logger.info("Displaying excerpt of data from input stream 1 after a difference was found:");
-                    logger.info(baos1.toString());
+                    logger.info("Displaying excerpt of data from input stream 1 after a difference was found: {}",
+                                baos1);
 
-                    logger.info("Displaying excerpt of data from input stream 2 after a difference was found:");
-                    logger.info(baos2.toString());
+                    logger.info("Displaying excerpt of data from input stream 2 after a difference was found: {}",
+                                baos2);
 
                     return true;
                 }
@@ -99,16 +100,14 @@ public class BinaryDiff
         {
             logger.error(e.getMessage(), e);
         }
-        finally
-        {
-            ResourceCloser.close(inputStream1, logger);
-            ResourceCloser.close(inputStream2, logger);
-        }
 
         return false;
     }
 
-    private long readExcerpt(InputStream is, long totalReadFromIS, byte[] b, ByteArrayOutputStream baos)
+    private long readExcerpt(InputStream is,
+                             long totalReadFromIS,
+                             byte[] b,
+                             ByteArrayOutputStream baos)
             throws IOException
     {
         int bytesReadFromIS;
@@ -126,18 +125,19 @@ public class BinaryDiff
         return totalReadFromIS;
     }
 
-    private boolean streamsHaveDifferentLength(long totalReadFromIS1, long totalReadFromIS2)
+    private boolean streamsHaveDifferentLength(long totalReadFromIS1,
+                                               long totalReadFromIS2)
     {
         if (totalReadFromIS1 != totalReadFromIS2)
         {
             if (totalReadFromIS1 == -1)
             {
-                logger.info("Input stream 1 ended before input stream 2 at byte " + totalReadFromIS1);
+                logger.info("Input stream 1 ended before input stream 2 at byte {}", totalReadFromIS1);
             }
 
             if (totalReadFromIS2 == -1)
             {
-                logger.info("Input stream 2 ended before input stream 1 at byte " + totalReadFromIS2);
+                logger.info("Input stream 2 ended before input stream 1 at byte {}", totalReadFromIS2);
             }
 
             return true;
@@ -146,24 +146,24 @@ public class BinaryDiff
         return false;
     }
 
-    public InputStream getInputStream1()
+    public byte[] getBytes1()
     {
-        return inputStream1;
+        return bytes1;
     }
 
-    public void setInputStream1(InputStream inputStream1)
+    public void setBytes1(byte[] bytes1)
     {
-        this.inputStream1 = inputStream1;
+        this.bytes1 = bytes1;
     }
 
-    public InputStream getInputStream2()
+    public byte[] getBytes2()
     {
-        return inputStream2;
+        return bytes2;
     }
 
-    public void setInputStream2(InputStream inputStream2)
+    public void setBytes2(byte[] bytes2)
     {
-        this.inputStream2 = inputStream2;
+        this.bytes2 = bytes2;
     }
 
     public long getNumberOfBytesToShowUponDifference()

@@ -19,9 +19,8 @@ public interface Repositioning
      * Reposition manually.
      *
      * @param skipBytes
-     * @throws IOException
      */
-    void reposition(long skipBytes) throws IOException;
+    void reposition(long skipBytes);
 
     boolean hasMoreByteRanges();
 

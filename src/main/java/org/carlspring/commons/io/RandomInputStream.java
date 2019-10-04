@@ -1,6 +1,5 @@
 package org.carlspring.commons.io;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Random;
 
@@ -35,7 +34,6 @@ public class RandomInputStream
 
     @Override
     public int read()
-            throws IOException
     {
         if (count >= length)
         {

@@ -5,6 +5,8 @@ import org.carlspring.commons.util.MessageDigestUtils;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -19,7 +21,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class MultipleDigestOutputStreamTest
 {
-
+    private static final Logger logger = LoggerFactory.getLogger(MultipleDigestOutputStreamTest.class);
 
     @Before
     public void setUp()
@@ -56,8 +58,8 @@ public class MultipleDigestOutputStreamTest
 
         mdos.close();
 
-        System.out.println("MD5:  " + md5);
-        System.out.println("SHA1: " + sha1);
+        logger.debug("MD5:  " + md5);
+        logger.debug("SHA1: " + sha1);
 
         File md5File = new File(file.getAbsolutePath() + EncryptionAlgorithmsEnum.MD5.getExtension());
         File sha1File = new File(file.getAbsolutePath() + EncryptionAlgorithmsEnum.SHA1.getExtension());
@@ -107,11 +109,11 @@ public class MultipleDigestOutputStreamTest
         bytes = new byte[size];
         bais1.close();
 
-        System.out.println("Read " + total + " bytes.");
+        logger.debug("Read {} bytes", total);
 
         bais2.skip(total);
 
-        System.out.println("Skipped " + total + "/" + s.getBytes().length + " bytes.");
+        logger.debug("Skipped {}/{} bytes.", total, s.getBytes().length);
 
         while ((len = bais2.read(bytes, 0, size)) != -1)
         {
@@ -122,18 +124,18 @@ public class MultipleDigestOutputStreamTest
 
         mdos.flush();
 
-        System.out.println("Original:      " + s);
-        System.out.println("Read:          " + new String(baos.toByteArray()));
+        logger.debug("Original:      {}", s);
+        logger.debug("Read:          {}", new String(baos.toByteArray()));
 
-        System.out.println("Read " + total + "/" + s.getBytes().length + " bytes.");
+        logger.debug("Read {}/{} bytes.", total, s.getBytes().length);
 
         mdos.close();
 
         final String md5 = mdos.getMessageDigestAsHexadecimalString(EncryptionAlgorithmsEnum.MD5.getAlgorithm());
         final String sha1 = mdos.getMessageDigestAsHexadecimalString(EncryptionAlgorithmsEnum.SHA1.getAlgorithm());
 
-        System.out.println("MD5:  " + md5);
-        System.out.println("SHA1: " + sha1);
+        logger.debug("MD5:  {}", md5);
+        logger.debug("SHA1: {}", sha1);
 
         assertEquals("Incorrect MD5 sum!", "693188a2fb009bf2a87afcbca95cfcd6", md5);
         assertEquals("Incorrect SHA-1 sum!", "6ed7c74babd1609cb11836279672ade14a8748c1", sha1);

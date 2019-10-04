@@ -1,12 +1,13 @@
 package org.carlspring.commons.io;
 
 import org.carlspring.commons.encryption.EncryptionAlgorithmsEnum;
-import org.carlspring.commons.io.resource.ResourceCloser;
 import org.carlspring.commons.util.MessageDigestUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.FilterOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
@@ -20,10 +21,8 @@ import java.util.Map;
 public class MultipleDigestOutputStream extends FilterOutputStream
 {
 
-    private static final Logger logger = LoggerFactory.getLogger(MultipleDigestOutputStream.class);
-
-    public static final String[] DEFAULT_ALGORITHMS = { EncryptionAlgorithmsEnum.MD5.getAlgorithm(),
-                                                        EncryptionAlgorithmsEnum.SHA1.getAlgorithm() };
+    private static final String[] DEFAULT_ALGORITHMS = { EncryptionAlgorithmsEnum.MD5.getAlgorithm(),
+                                                         EncryptionAlgorithmsEnum.SHA1.getAlgorithm() };
 
     private Map<String, MessageDigest> digests = new LinkedHashMap<>();
 
@@ -51,13 +50,13 @@ public class MultipleDigestOutputStream extends FilterOutputStream
     }
 
     public MultipleDigestOutputStream(File file, OutputStream os)
-            throws NoSuchAlgorithmException, FileNotFoundException
+            throws NoSuchAlgorithmException
     {
         this(Paths.get(file.getAbsolutePath()), os, DEFAULT_ALGORITHMS, true);
     }
 
     public MultipleDigestOutputStream(Path path, OutputStream os)
-            throws NoSuchAlgorithmException, FileNotFoundException
+            throws NoSuchAlgorithmException
     {
         this(path, os, DEFAULT_ALGORITHMS, true);
     }
@@ -66,8 +65,7 @@ public class MultipleDigestOutputStream extends FilterOutputStream
                                       OutputStream os,
                                       String[] algorithms,
                                       boolean generateChecksumFiles)
-            throws NoSuchAlgorithmException,
-                   FileNotFoundException
+            throws NoSuchAlgorithmException
     {
         super(os);
 
@@ -193,18 +191,13 @@ public class MultipleDigestOutputStream extends FilterOutputStream
     private void writeChecksum(Path path, String algorithm, String hexDigest)
             throws IOException
     {
-        FileWriter fw = null;
+        final String filePathStr =
+                path.toAbsolutePath().toString() + EncryptionAlgorithmsEnum.fromAlgorithm(algorithm).getExtension();
 
-        try
+        try (FileWriter fw = new FileWriter(filePathStr))
         {
-            fw = new FileWriter(path.toAbsolutePath().toString() + EncryptionAlgorithmsEnum.fromAlgorithm(algorithm).getExtension());
             fw.write(hexDigest + "\n");
             fw.flush();
-            fw.close();
-        }
-        finally
-        {
-            ResourceCloser.close(fw, logger);
         }
     }
 
