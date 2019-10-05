@@ -1,10 +1,10 @@
 package org.carlspring.commons.util;
 
-import org.carlspring.commons.io.resource.ResourceCloser;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.security.MessageDigest;
 
 /**
@@ -13,8 +13,9 @@ import java.security.MessageDigest;
 public class MessageDigestUtils
 {
 
-    private static final Logger logger = LoggerFactory.getLogger(MessageDigestUtils.class);
-
+    private MessageDigestUtils()
+    {
+    }
 
     public static String convertToHexadecimalString(MessageDigest md)
     {
@@ -28,69 +29,21 @@ public class MessageDigestUtils
         return sb.toString();
     }
 
-    public static void writeDigestAsHexadecimalString(MessageDigest digest,
-                                                      File artifactFile,
-                                                      String checksumFileExtension)
-            throws IOException
-    {
-        String checksum = MessageDigestUtils.convertToHexadecimalString(digest);
-
-        writeChecksum(artifactFile, checksumFileExtension, checksum);
-    }
-
-    public static void writeChecksum(File artifactFile, String checksumFileExtension, String checksum)
-            throws IOException
-    {
-        final File checksumFile = new File(artifactFile.getAbsolutePath() + checksumFileExtension);
-
-        FileOutputStream fos = null;
-
-        try
-        {
-            fos = new FileOutputStream(checksumFile);
-
-            fos.write((checksum + "\n").getBytes());
-            fos.flush();
-            fos.close();
-        }
-        finally
-        {
-            ResourceCloser.close(fos, logger);
-        }
-    }
-
     public static String readChecksumFile(String path)
             throws IOException
     {
-        InputStream is = null;
-
-        try
+        try (InputStream is = new FileInputStream(path))
         {
-            is = new FileInputStream(path);
-
             return readChecksumFile(is);
-        }
-        finally
-        {
-            ResourceCloser.close(is, null);
         }
     }
 
-    public static String readChecksumFile(InputStream is)
+    private static String readChecksumFile(InputStream is)
             throws IOException
     {
-        BufferedReader br = null;
-
-        try
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(is)))
         {
-            br = new BufferedReader(new InputStreamReader(is));
-
             return br.readLine();
-        }
-        finally
-        {
-            ResourceCloser.close(br, null);
-            ResourceCloser.close(is, null);
         }
     }
 

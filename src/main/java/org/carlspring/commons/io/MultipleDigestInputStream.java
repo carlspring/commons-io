@@ -22,22 +22,24 @@ public class MultipleDigestInputStream
         extends ByteRangeInputStream
 {
 
-    public static final String[] DEFAULT_ALGORITHMS = { EncryptionAlgorithmsEnum.MD5.getAlgorithm(),
-                                                        EncryptionAlgorithmsEnum.SHA1.getAlgorithm() };
+    private static final String[] DEFAULT_ALGORITHMS = { EncryptionAlgorithmsEnum.MD5.getAlgorithm(),
+                                                         EncryptionAlgorithmsEnum.SHA1.getAlgorithm() };
 
     private Map<String, MessageDigest> digests = new LinkedHashMap<>();
 
     private Map<String, String> hexDigests = new LinkedHashMap<>();
 
 
-    public MultipleDigestInputStream(ReloadableInputStreamHandler handler, ByteRange byteRange)
-            throws IOException, NoSuchAlgorithmException
+    public MultipleDigestInputStream(ReloadableInputStreamHandler handler,
+                                     ByteRange byteRange)
+            throws IOException
     {
         super(handler, byteRange);
     }
 
-    public MultipleDigestInputStream(ReloadableInputStreamHandler handler, List<ByteRange> byteRanges)
-            throws IOException, NoSuchAlgorithmException
+    public MultipleDigestInputStream(ReloadableInputStreamHandler handler,
+                                     List<ByteRange> byteRanges)
+            throws IOException
     {
         super(handler, byteRanges);
     }
@@ -78,6 +80,11 @@ public class MultipleDigestInputStream
         return digests;
     }
 
+    public void setDigests(Map<String, MessageDigest> digests)
+    {
+        this.digests = digests;
+    }
+
     public Map<String, String> getHexDigests()
     {
         return hexDigests;
@@ -98,11 +105,6 @@ public class MultipleDigestInputStream
 
             return hexDigest;
         }
-    }
-
-    public void setDigests(Map<String, MessageDigest> digests)
-    {
-        this.digests = digests;
     }
 
     @Override
@@ -199,33 +201,29 @@ public class MultipleDigestInputStream
     {
         if (byteRanges != null && !byteRanges.isEmpty() && currentByteRangeIndex < byteRanges.size())
         {
-            if (currentByteRangeIndex < byteRanges.size())
+            ByteRange current = currentByteRange;
+
+            currentByteRangeIndex++;
+            currentByteRange = byteRanges.get(currentByteRangeIndex);
+
+            if (currentByteRange.getOffset() > current.getLimit())
             {
-                ByteRange current = currentByteRange;
+                // If the offset is higher than the current position, skip forward
+                long bytesToSkip = currentByteRange.getOffset() - current.getLimit();
 
-                currentByteRangeIndex++;
-                currentByteRange = byteRanges.get(currentByteRangeIndex);
-
-                if (currentByteRange.getOffset() > current.getLimit())
-                {
-                    // If the offset is higher than the current position, skip forward
-                    long bytesToSkip = currentByteRange.getOffset() - current.getLimit();
-
-                    //noinspection ResultOfMethodCallIgnored
-                    in.skip(bytesToSkip);
-                }
-                else
-                {
-                    reloadableInputStreamHandler.reload();
-                    in = reloadableInputStreamHandler.getInputStream();
-                }
+                //noinspection ResultOfMethodCallIgnored
+                in.skip(bytesToSkip);
+            }
+            else
+            {
+                reloadableInputStreamHandler.reload();
+                in = reloadableInputStreamHandler.getInputStream();
             }
         }
     }
 
     @Override
     public void reposition(long skipBytes)
-            throws IOException
     {
 
     }

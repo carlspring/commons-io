@@ -11,18 +11,22 @@ import java.nio.file.StandardCopyOption;
 public class FileUtils
 {
 
-    public static void moveDirectory(Path srcPath, Path destPath)
+    private FileUtils()
+    {
+    }
+
+    static void moveDirectory(Path srcPath,
+                              Path destPath)
             throws IOException
     {
-        if (!srcPath.toFile().isDirectory())
+        if (!Files.isDirectory(srcPath))
         {
             throw new IOException(srcPath.toAbsolutePath().toString() + " is not a directory!");
         }
 
-        if (!destPath.toFile().exists())
+        if (Files.notExists(destPath))
         {
-            //noinspection ResultOfMethodCallIgnored
-            destPath.toFile().mkdirs();
+            Files.createDirectories(destPath);
         }
 
         Files.move(srcPath, destPath, StandardCopyOption.REPLACE_EXISTING);

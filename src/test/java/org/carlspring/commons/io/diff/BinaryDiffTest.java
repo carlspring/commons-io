@@ -1,37 +1,32 @@
 package org.carlspring.commons.io.diff;
 
-import org.junit.Test;
-
-import java.io.ByteArrayInputStream;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author mtodorov
  */
-public class BinaryDiffTest
+class BinaryDiffTest
 {
-
-
     @Test
-    public void testNoDifferences()
+    void testNoDifferences()
     {
-        ByteArrayInputStream bais1 = new ByteArrayInputStream("This is a test".getBytes());
-        ByteArrayInputStream bais2 = new ByteArrayInputStream("This is a test".getBytes());
+        byte[] bytes1 = "This is a test.".getBytes();
+        byte[] bytes2 = "This is a test.".getBytes();
 
-        BinaryDiff diff = new BinaryDiff(bais1, bais2);
-        assertFalse("Reported differences where no such exit!", diff.diff());
+        BinaryDiff diff = new BinaryDiff(bytes1, bytes2);
+        assertFalse(diff.diff(), "Reported differences where no such exit!");
     }
 
     @Test
-    public void testDifferences()
+    void testDifferences()
     {
-        ByteArrayInputStream bais1 = new ByteArrayInputStream("This is a test.".getBytes());
-        ByteArrayInputStream bais2 = new ByteArrayInputStream("This is another test.".getBytes());
+        byte[] bytes1 = "This is a test.".getBytes();
+        byte[] bytes2 = "This is another test.".getBytes();
 
-        BinaryDiff diff = new BinaryDiff(bais1, bais2);
-        assertTrue("Reported no differences where such exit!", diff.diff());
+        BinaryDiff diff = new BinaryDiff(bytes1, bytes2);
+        assertTrue(diff.diff(), "Reported no differences where such exit!");
     }
 
 }

@@ -1,15 +1,23 @@
 package org.carlspring.commons.io;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.CopyOption;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.FileSystemLoopException;
+import java.nio.file.FileVisitOption;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
 import java.util.EnumSet;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import static java.nio.file.FileVisitResult.CONTINUE;
 import static java.nio.file.FileVisitResult.SKIP_SIBLINGS;
-import static java.nio.file.FileVisitResult.SKIP_SUBTREE;
 import static java.nio.file.StandardCopyOption.COPY_ATTRIBUTES;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
@@ -20,74 +28,75 @@ public class RecursiveMover
         implements FileVisitor<Path>
 {
 
+    private static final Logger logger = LoggerFactory.getLogger(RecursiveMover.class);
+
     private final Path source;
 
     private final Path target;
 
 
-    public RecursiveMover(Path source, Path target)
+    public RecursiveMover(Path source,
+                          Path target)
     {
         this.source = source;
         this.target = target;
     }
 
-    public FileVisitResult preVisitDirectory(Path sourcePath, BasicFileAttributes attrs)
+    public FileVisitResult preVisitDirectory(Path sourcePath,
+                                             BasicFileAttributes attrs)
             throws IOException
     {
         Path relativePath = relativizeTargetPath(sourcePath);
-        Path targetPath = Paths.get(target.toFile().getPath() + "/" + relativePath.toFile().getPath());
+        Path targetPath = target.resolve(relativePath);
 
-        File targetFile = targetPath.toFile();
-        if (sourcePath.toFile().exists() && targetFile.exists())
+        if (Files.exists(sourcePath) && Files.exists(targetPath))
         {
             // 1) If its a file, delete it
-            if (targetFile.isFile())
+            if (Files.isRegularFile(sourcePath))
             {
-                //noinspection ResultOfMethodCallIgnored
-                targetFile.delete();
+                Files.deleteIfExists(sourcePath);
             }
             // 2) If its a directory, iterate and check
             else
             {
                 // Carry out a directory move
                 String[] paths = sourcePath.toFile().list();
-                Arrays.sort(paths);
-
-                for (String path : paths)
+                if (paths != null)
                 {
-                    Path srcPath = Paths.get(sourcePath.toFile().getPath(), path);
-                    Path destPath = Paths.get(targetPath.toFile().getPath(), path);
+                    Arrays.sort(paths);
 
-                    File srcFile = srcPath.toFile();
-                    File destFile = destPath.toFile();
-
-                    if (srcFile.isDirectory())
+                    for (String path : paths)
                     {
-                        if (!targetPath.toFile().exists())
-                        {
-                            // Make sure we've created the destination directory:
+                        Path srcPath = sourcePath.resolve(path);
+                        Path destPath = targetPath.resolve(path);
 
-                            move(sourcePath, targetPath, true);
+                        if (Files.isDirectory(srcPath))
+                        {
+                            if (Files.notExists(targetPath))
+                            {
+                                // Make sure we've created the destination directory:
+
+                                move(sourcePath, targetPath, true);
+                            }
+                            else
+                            {
+                                EnumSet<FileVisitOption> opts = EnumSet.of(FileVisitOption.FOLLOW_LINKS);
+                                RecursiveMover recursiveMover = new RecursiveMover(srcPath, destPath.getParent());
+                                Files.walkFileTree(srcPath, opts, Integer.MAX_VALUE, recursiveMover);
+                            }
                         }
                         else
                         {
-                            EnumSet<FileVisitOption> opts = EnumSet.of(FileVisitOption.FOLLOW_LINKS);
-                            RecursiveMover recursiveMover = new RecursiveMover(srcPath, destPath.getParent());
-                            Files.walkFileTree(srcFile.toPath(), opts, Integer.MAX_VALUE, recursiveMover);
+                            Files.move(srcPath, destPath, REPLACE_EXISTING);
                         }
                     }
-                    else
+
+                    if (paths.length == 0)
                     {
-                        Files.move(srcFile.toPath(), destFile.toPath(), REPLACE_EXISTING);
+                        // Make sure the source directory has been removed, if its empty.
+                        // This is for cases where the destination contains the directory or part of the resources.
+                        Files.deleteIfExists(sourcePath);
                     }
-                }
-                
-                if (sourcePath.toFile().list().length == 0)
-                {
-                    // Make sure the source directory has been removed, if its empty.
-                    // This is for cases where the destination contains the directory or part of the resources.
-                    //noinspection ResultOfMethodCallIgnored
-                    sourcePath.toFile().delete();
                 }
 
                 return SKIP_SIBLINGS;
@@ -102,12 +111,13 @@ public class RecursiveMover
         return Paths.get(source.toFile().getName() + "/" + source.relativize(dir.toAbsolutePath()));
     }
 
-    public FileVisitResult visitFile(Path sourcePath, BasicFileAttributes attrs)
+    public FileVisitResult visitFile(Path sourcePath,
+                                     BasicFileAttributes attrs)
     {
         Path relativePath = relativizeTargetPath(sourcePath);
-        Path targetPath = Paths.get(target.toFile().getPath() + "/" + relativePath.toFile().getPath());
+        Path targetPath = target.resolve(relativePath);
 
-        if (!targetPath.getParent().toFile().exists())
+        if (Files.notExists(targetPath.getParent()))
         {
             move(sourcePath.getParent(), targetPath.getParent(), false);
 
@@ -121,31 +131,34 @@ public class RecursiveMover
         }
     }
 
-    public FileVisitResult postVisitDirectory(Path dir, IOException exc)
+    public FileVisitResult postVisitDirectory(Path dir,
+                                              IOException exc)
     {
         return CONTINUE;
     }
 
-    public FileVisitResult visitFileFailed(Path file, IOException e)
+    public FileVisitResult visitFileFailed(Path file,
+                                           IOException e)
     {
         if (e instanceof FileSystemLoopException)
         {
-            System.err.println("Cycle detected: " + file);
+            logger.error("Cycle detected: {}", file);
         }
         else
         {
-            System.err.format("Unable to move: %s: %s%n", file, e);
-
-            e.printStackTrace();
+            logger.error("Unable to move: {}", file, e);
         }
 
         return CONTINUE;
     }
 
-    public void move(Path source, Path target, boolean preserve)
+    public void move(Path source,
+                     Path target,
+                     boolean preserve)
     {
         CopyOption[] options = (preserve) ?
-                               new CopyOption[]{ COPY_ATTRIBUTES, REPLACE_EXISTING } :
+                               new CopyOption[]{ COPY_ATTRIBUTES,
+                                                 REPLACE_EXISTING } :
                                new CopyOption[]{ REPLACE_EXISTING };
 
         try
@@ -155,15 +168,13 @@ public class RecursiveMover
         catch (FileAlreadyExistsException e)
         {
             // Ignore
-            e.printStackTrace();
+            logger.error("File already exists", e);
         }
         catch (IOException e)
         {
-            System.err.println("ERROR: Unable to move " +
-                               source.toFile().getAbsolutePath() + " to " +
-                               target.toFile().getAbsolutePath() + "!");
-
-            e.printStackTrace();
+            logger.error("ERROR: Unable to move {} to {}!",
+                         source.toAbsolutePath(),
+                         target.toAbsolutePath(), e);
         }
     }
 
