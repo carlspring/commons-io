@@ -7,7 +7,7 @@
 
     <groupId>org.carlspring.commons</groupId>
     <artifactId>commons-io</artifactId>
-    <version>1.1-SNAPSHOT</version>
+    <version>1.1</version>
     <packaging>jar</packaging>
 
     <name>Commons: IO</name>
