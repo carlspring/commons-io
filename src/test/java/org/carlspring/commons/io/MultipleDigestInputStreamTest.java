@@ -68,12 +68,20 @@ class MultipleDigestInputStreamTest
 
         final String md5 = mdis.getMessageDigestAsHexadecimalString(EncryptionAlgorithmsEnum.MD5.getAlgorithm());
         final String sha1 = mdis.getMessageDigestAsHexadecimalString(EncryptionAlgorithmsEnum.SHA1.getAlgorithm());
+        final String sha256 = mdis.getMessageDigestAsHexadecimalString(EncryptionAlgorithmsEnum.SHA256.getAlgorithm());
+        final String sha512 = mdis.getMessageDigestAsHexadecimalString(EncryptionAlgorithmsEnum.SHA512.getAlgorithm());
 
         assertEquals("693188a2fb009bf2a87afcbca95cfcd6", md5, "Incorrect MD5 sum!");
         assertEquals("6ed7c74babd1609cb11836279672ade14a8748c1", sha1, "Incorrect SHA-1 sum!");
+        assertEquals("4716861ef13609f87cc9ba9d0f9cba6c1d7894dd21cfca2f965631d6933fffbb", sha256, "Incorrect SHA-256 sum!");
+        assertEquals("d87e40392a0749350059a366f3cc2e72a008b5feae3a845528660649545d8388b86ad540498756d9c5eb9365c5940c4146a8f5302d1ed42a253b90f9ec438deb",
+                     sha512,
+                     "Incorrect SHA-512 sum!");
 
         logger.debug("MD5:  {}", md5);
         logger.debug("SHA1: {}", sha1);
+        logger.debug("SHA1: {}", sha256);
+        logger.debug("SHA1: {}", sha512);
     }
 
     @Test

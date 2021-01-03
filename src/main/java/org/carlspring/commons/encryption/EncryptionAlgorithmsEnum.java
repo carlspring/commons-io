@@ -10,7 +10,11 @@ public enum EncryptionAlgorithmsEnum
 
     MD5("MD5", ".md5"),
 
-    SHA1("SHA-1", ".sha1");
+    SHA1("SHA-1", ".sha1"),
+
+    SHA256("SHA-256", ".sha256"),
+
+    SHA512("SHA-512", ".sha512");
 
 
     private String extension;
@@ -54,6 +58,14 @@ public enum EncryptionAlgorithmsEnum
         if (algorithm.equals(SHA1.getAlgorithm()))
         {
             return SHA1;
+        }
+        if (algorithm.equals(SHA256.getAlgorithm()))
+        {
+            return SHA256;
+        }
+        if (algorithm.equals(SHA512.getAlgorithm()))
+        {
+            return SHA512;
         }
 
         throw new IOException("Unsupported digest algorithm!");

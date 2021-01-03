@@ -23,7 +23,9 @@ public class MultipleDigestInputStream
 {
 
     private static final String[] DEFAULT_ALGORITHMS = { EncryptionAlgorithmsEnum.MD5.getAlgorithm(),
-                                                         EncryptionAlgorithmsEnum.SHA1.getAlgorithm() };
+                                                         EncryptionAlgorithmsEnum.SHA1.getAlgorithm(),
+                                                         EncryptionAlgorithmsEnum.SHA256.getAlgorithm(),
+                                                         EncryptionAlgorithmsEnum.SHA512.getAlgorithm() };
 
     private Map<String, MessageDigest> digests = new LinkedHashMap<>();
 
