@@ -61,7 +61,8 @@ class MultipleDigestOutputStreamTest
         assertEquals("afa6c8b3a2fae95785dc7d9685a57835d703ac88", sha1, "Incorrect SHA-1 sum!");
         assertEquals("a8a2f6ebe286697c527eb35a58b5539532e9b3ae3b64d4eb0a46fb657b41562c", sha256, "Incorrect SHA-256 sum!");
         assertEquals("f3bf9aa70169e4ab5339f20758986538fe6c96d7be3d184a036cde8161105fcf53516428fa096ac56247bb88085b0587d5ec8e56a6807b1af351305b2103d74b",
-                sha512, "Incorrect SHA-512 sum!");
+                     sha512,
+                     "Incorrect SHA-512 sum!");
 
         mdos.close();
 
@@ -162,7 +163,8 @@ class MultipleDigestOutputStreamTest
         assertEquals("6ed7c74babd1609cb11836279672ade14a8748c1", sha1, "Incorrect SHA-1 sum!");
         assertEquals("4716861ef13609f87cc9ba9d0f9cba6c1d7894dd21cfca2f965631d6933fffbb", sha256, "Incorrect SHA-256 sum!");
         assertEquals("d87e40392a0749350059a366f3cc2e72a008b5feae3a845528660649545d8388b86ad540498756d9c5eb9365c5940c4146a8f5302d1ed42a253b90f9ec438deb",
-                sha512, "Incorrect SHA-512 sum!");
+                     sha512,
+                     "Incorrect SHA-512 sum!");
     }
 
 }
